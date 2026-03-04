@@ -8,4 +8,5 @@ docker-compose.yml
 npm-debug.log
 
 
-docker build -t ai_movie_insight_builder .
+
+
