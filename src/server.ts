@@ -1,38 +1,29 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
-import helmet from "helmet";
 import movieRoutes from "./routes/movie.route";
 
 const app = express();
 
-// Helmet can sometimes block cross-origin requests, so we need to configure it
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    crossOriginOpenerPolicy: { policy: "unsafe-none" },
-  })
-);
-
-// Allow all origins with proper CORS
-app.use(
-  cors({
-    origin: "*", // Allow any origin
-    methods: ["GET", "POST", "OPTIONS"], // Allow common methods
-    allowedHeaders: ["Content-Type", "Authorization", "Accept"], // Allow common headers
-    credentials: false, // Must be false when using origin: "*"
-    optionsSuccessStatus: 200, // Some legacy browsers choke on 204
-  })
-);
-
-// Handle preflight requests for all routes
-app.options("*", cors());
+// Simple CORS - allow all origins
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Accept"]
+}));
 
 app.use(express.json());
 
+// Routes
 app.use("/api/movie", movieRoutes);
+
+// Basic error handler with proper types
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(err);
+  res.status(500).json({ error: "Something went wrong" });
+});
 
 const PORT = process.env.PORT || 5000;
 
