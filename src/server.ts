@@ -8,27 +8,27 @@ import movieRoutes from "./routes/movie.route";
 
 const app = express();
 
-app.use(helmet());
-
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
-  process.env.FRONTEND_URL, // vercel domain
-];
-
+// Helmet can sometimes block cross-origin requests, so we need to configure it
 app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    methods: ["GET", "POST"],
-    credentials: true,
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "unsafe-none" },
   })
 );
+
+// Allow all origins with proper CORS
+app.use(
+  cors({
+    origin: "*", // Allow any origin
+    methods: ["GET", "POST", "OPTIONS"], // Allow common methods
+    allowedHeaders: ["Content-Type", "Authorization", "Accept"], // Allow common headers
+    credentials: false, // Must be false when using origin: "*"
+    optionsSuccessStatus: 200, // Some legacy browsers choke on 204
+  })
+);
+
+// Handle preflight requests for all routes
+app.options("*", cors());
 
 app.use(express.json());
 
@@ -38,4 +38,5 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`CORS: All origins allowed`);
 });
