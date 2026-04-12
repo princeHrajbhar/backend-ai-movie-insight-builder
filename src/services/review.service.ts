@@ -27,9 +27,16 @@ export async function getReviewsById(
   limit: number = 10
 ): Promise<ReviewsResponse> {
 
+  console.log("🕷 Review Scraper Started");
+  console.log("🎬 IMDb ID:", imdbId);
+  console.log("📊 Review limit:", limit);
+
   if (!imdbId) {
+    console.log("❌ Error: IMDb ID missing");
     throw new Error("IMDb ID required");
   }
+
+  console.log("🚀 Launching Puppeteer browser...");
 
   const browser = await puppeteer.launch({
     headless: true,
@@ -37,24 +44,41 @@ export async function getReviewsById(
   });
 
   try {
+
     const page = await browser.newPage();
+
+    console.log("🌐 Opening IMDb reviews page...");
 
     await page.setUserAgent(
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     );
 
+    const url = `https://www.imdb.com/title/${imdbId}/reviews`;
+
+    console.log("📡 Navigating to:", url);
+
+    const start = Date.now();
+
     await page.goto(
-      `https://www.imdb.com/title/${imdbId}/reviews`,
+      url,
       {
         waitUntil: "networkidle2",
         timeout: 30000
       }
     );
 
+    const end = Date.now();
+
+    console.log(`⏱ Page load time: ${end - start} ms`);
+
+    console.log("⏳ Waiting for review cards...");
+
     await page.waitForSelector(
       '[data-testid="review-card-parent"]',
       { timeout: 10000 }
     );
+
+    console.log("✅ Review cards found, scraping reviews...");
 
     const reviews = await page.evaluate((limit: number) => {
 
@@ -128,6 +152,8 @@ export async function getReviewsById(
 
     }, limit);
 
+    console.log(`📝 Scraped ${reviews.length} reviews`);
+
     const summary: ReviewSummary = {
       totalReviews: reviews.length,
       averageRating:
@@ -141,15 +167,22 @@ export async function getReviewsById(
         reviews.reduce((acc, r) => acc + r.notHelpful, 0)
     };
 
+    console.log("📊 Review Summary:", summary);
+
     return {
       summary,
       reviews
     };
 
   } catch (error) {
-    console.error("Scraping error:", error);
+
+    console.error("🔥 Scraping error:", error);
     throw new Error("Failed to scrape reviews");
+
   } finally {
+
+    console.log("🧹 Closing browser...");
     await browser.close();
+
   }
 }

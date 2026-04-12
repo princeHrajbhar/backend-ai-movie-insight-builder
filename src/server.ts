@@ -3,11 +3,13 @@ dotenv.config();
 
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
+
 import movieRoutes from "./routes/movie.route";
+import reviewRoutes from "./routes/review.route";
 
 const app = express();
 
-// Simple CORS - allow all origins
+// CORS
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "OPTIONS"],
@@ -18,8 +20,14 @@ app.use(express.json());
 
 // Routes
 app.use("/api/movie", movieRoutes);
+app.use("/api/reviews", reviewRoutes);
 
-// Basic error handler with proper types
+// Health check
+app.get("/", (req, res) => {
+  res.send("Server running");
+});
+
+// Error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err);
   res.status(500).json({ error: "Something went wrong" });
